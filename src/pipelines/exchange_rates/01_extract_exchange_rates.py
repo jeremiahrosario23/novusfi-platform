@@ -5,6 +5,7 @@ import json         # common methods: dumps(), dump(), loads(), load() (with s m
 import os
 from datetime import datetime
 
+print(sys.argv)
 
 # Catch the parameter (and ignore IPython's interactive -f flag)
 if len(sys.argv) > 1 and not sys.argv[1].startswith("-f"): 
