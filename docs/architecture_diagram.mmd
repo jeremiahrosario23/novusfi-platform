@@ -1,0 +1,48 @@
+graph TD
+    subgraph External Sources
+        API[FX Exchange API]
+        LDB[(Loan Origination DB)]
+        PG[Payment Gateway CSV Drop]
+    end
+
+    subgraph "The Python Engine (src/)"
+        direction TB
+        API -->|Extract| B_FX[(Bronze: Raw FX JSON)]
+        LDB -->|Extract| B_Loan[(Bronze: Raw Loan Data)]
+        PG -->|Volume Ingest| B_Pay[(Bronze: Raw Payments)]
+        
+        B_FX -->|PySpark| S_FX[(Silver: Cleaned FX)]
+        B_Loan -->|PySpark| S_Loan[(Silver: Cleaned Loans)]
+        B_Pay -->|PySpark| S_Pay[(Silver: Cleaned Payments)]
+    end
+
+    subgraph "The SQL Engine (dbt_novusfi/)"
+        direction TB
+        S_FX -->|dbt source| STG_FX[Staging: stg_exchange_rates]
+        S_Loan -->|dbt source| STG_Loan[Staging: stg_loan_collections]
+        S_Pay -->|dbt source| STG_Pay[Staging: stg_payments]
+        
+        STG_FX --> INT[Intermediate Transformations]
+        STG_Loan --> INT
+        STG_Pay --> INT
+        
+        INT --> G_Dim[(Gold: dim_currency)]
+        INT --> G_Fct[(Gold: fct_collections_daily)]
+        INT --> G_FctPay[(Gold: fct_settlements)]
+    end
+
+    subgraph Downstream
+        G_Dim --> BI[BI Dashboards]
+        G_Fct --> BI
+        G_FctPay --> BI
+    end
+
+    classDef source fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef bronze fill:#cd7f32,stroke:#333,stroke-width:1px;
+    classDef silver fill:#c0c0c0,stroke:#333,stroke-width:1px;
+    classDef gold fill:#ffd700,stroke:#333,stroke-width:1px;
+    
+    class API,LDB,PG source;
+    class B_FX,B_Loan,B_Pay bronze;
+    class S_FX,S_Loan,S_Pay silver;
+    class G_Dim,G_Fct,G_FctPay gold;
