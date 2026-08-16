@@ -18,6 +18,38 @@ from datetime import datetime, timedelta
 # initiate Faker object
 fake = Faker()
 
+# -------------------- Add Currency and Location Logic
+def get_currency_and_location():
+    """
+    Assigns a currency and customer location based on the Neobank's regional distribution strategy.
+    Currencies are compatible with https://open.er-api.com/v6/latest/USD
+    """
+    rand_val = random.random()
+    
+    if rand_val < 0.40:
+        # 40% Local (Philippines)
+        return "PHP", "Philippines"
+    elif rand_val < 0.70:
+        # 30% Southeast Asia
+        return random.choice([
+            ("SGD", "Singapore"), ("MYR", "Malaysia"), 
+            ("IDR", "Indonesia"), ("THB", "Thailand"), 
+            ("VND", "Vietnam")
+        ])
+    elif rand_val < 0.90:
+        # 20% Rest of Asia
+        return random.choice([
+            ("JPY", "Japan"), ("KRW", "South Korea"), 
+            ("HKD", "Hong Kong"), ("TWD", "Taiwan"), 
+            ("INR", "India")
+        ])
+    else:
+        # 10% Outliers (Global)
+        return random.choice([
+            ("USD", "USA"), ("EUR", "Eurozone"), 
+            ("GBP", "United Kingdom"), ("AUD", "Australia")
+        ])
+
 # Define function for generating loans
 def generate_loans(num_records=None):
     # Set random number of records to generate
@@ -49,6 +81,9 @@ def generate_loans(num_records=None):
 
         # Dirty Data Simulation 1: Inconsistent date formats
         date_format = "%Y-%m-%d" if random.random() > 0.2 else "%m/%d/%Y"
+        
+        # Determine Currency and Location
+        contract_currency, contract_location = get_currency_and_location()
 
         # Base financial calculations
         principal = round(random.uniform(500.00, 25000.00), 2)
@@ -58,6 +93,8 @@ def generate_loans(num_records=None):
         loan = {
             "loan_id": str(uuid.uuid4()),
             "origination_date": orig_date.strftime(date_format),
+            "currency": contract_currency,
+            "customer_location": contract_location,
             "status": "Active",
             "borrower_details": {
                 "personal_info": {
